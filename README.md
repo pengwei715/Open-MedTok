@@ -378,14 +378,20 @@ python benchmarks/evaluate_medqa.py \
 MedTok includes comprehensive test suites to ensure code quality and correct functionality:
 
 ```bash
-# Run all tests (unit and integration)
-python scripts/run_all_tests.py
+# Run all tests with pytest
+pytest tests/
 
 # Run only unit tests
-python scripts/run_all_tests.py --unit-only
+pytest tests/ -k "not integration"
+
+# Run only integration tests
+pytest tests/ -m "integration"
 
 # Run with coverage reporting
-python scripts/run_all_tests.py --with-coverage
+pytest tests/ --cov=model --cov=data
+
+# Or use the test runner script
+python scripts/run_all_tests.py
 ```
 
 ## License
