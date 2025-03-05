@@ -42,6 +42,34 @@ cd medtok
 pip install -r requirements.txt
 ```
 
+## Getting Started
+
+### Quick Start
+
+1. Prepare the data (small sample for testing):
+   ```bash
+   python scripts/preprocess_pipeline.py --output data/ --codes_only
+   ```
+
+2. Train a basic model (small scale for testing):
+   ```bash
+   python train.py \
+       --data_dir data/ \
+       --output_dir output/ \
+       --batch_size 8 \
+       --epochs 5 \
+       --codebook_size 1000 \
+       --embedding_dim 64
+   ```
+
+3. Tokenize a medical code with your trained model:
+   ```bash
+   python examples/tokenize_example.py \
+       --model output/checkpoints/last_model.pt \
+       --code "E11.9" \
+       --desc "Type 2 diabetes mellitus without complications"
+   ```
+
 ## Hardware Requirements
 
 ### Minimum Requirements
@@ -101,7 +129,7 @@ To fully reproduce the results from the paper, you'll need access to the followi
    - Request access to the MIMIC datasets
    - Download using the provided scripts:
      ```bash
-     python scripts/download_mimic.py --dataset mimic-iii --physionet-user YOUR_USERNAME
+     python scripts/download_mimic.py --version mimic3 --username YOUR_USERNAME --prepare
      ```
 
 2. **PrimeKG**:
@@ -115,6 +143,13 @@ To fully reproduce the results from the paper, you'll need access to the followi
      ```bash
      python scripts/download_medical_codes.py --output data/medical_codes
      ```
+     
+4. **Training Your Own Models**:
+   - As this is a recent research paper implementation, you'll need to train models from scratch:
+     ```bash
+     # Follow the training instructions below after data preparation
+     python train.py --data_dir data/dataset --output_dir output/
+     ```
 
 ## Data Preparation
 
@@ -123,14 +158,31 @@ MEDTOK requires two types of data for each medical code:
 1. **Text Descriptions**: Textual definitions of each medical code
 2. **Graph Representations**: Subgraphs from biomedical knowledge graphs
 
-The repository includes preprocessing scripts to help prepare your data:
+### Option 1: Unified Preprocessing Pipeline
+
+The simplest approach is to use the unified preprocessing pipeline:
 
 ```bash
+# Run the complete preprocessing pipeline
+python scripts/preprocess_pipeline.py --output data/ --full
+
+# Or just process medical codes only
+python scripts/preprocess_pipeline.py --output data/ --codes_only
+```
+
+### Option 2: Step-by-Step Preprocessing
+
+If you prefer manual control over the preprocessing steps:
+
+```bash
+# Process medical codes
+python scripts/process_medical_codes.py --input data/medical_codes --output data/processed_codes
+
 # Prepare text descriptions
-python data/preprocessing/text_processor.py --input your_codes.csv --output processed_descriptions.csv
+python data/preprocessing/text_processor.py --input data/processed_codes/codes.csv --output data/processed_descriptions.csv
 
 # Prepare graph data
-python data/preprocessing/graph_processor.py --input your_codes.csv --kg_path your_knowledge_graph.json --output_dir graphs/
+python data/preprocessing/graph_processor.py --input data/processed_codes/codes.csv --kg_path data/primekg/kg.json --output_dir data/graphs/
 ```
 
 ## Training
@@ -187,6 +239,21 @@ python infer.py \
 - `--graph_dir`: Directory with graph files
 - `--batch_size`: Batch size for inference
 - `--device`: Device to use ("cuda" or "cpu")
+
+## Visualization
+
+MedTok includes visualization tools to better understand token representations:
+
+```bash
+# Visualize tokenization results
+python examples/visualizations/token_visualizer.py \
+    --model output/checkpoints/best_model.pt \
+    --codes examples/sample_codes.json \
+    --output visualization_output \
+    --method tsne
+```
+
+This generates an HTML report with interactive visualizations of token distributions and embeddings, making it easier to interpret the multimodal token representations.
 
 ## Benchmarking and Evaluation
 
@@ -304,6 +371,21 @@ python benchmarks/evaluate_medqa.py \
   journal={arXiv preprint arXiv:2502.04397},
   year={2024}
 }
+```
+
+## Testing
+
+MedTok includes comprehensive test suites to ensure code quality and correct functionality:
+
+```bash
+# Run all tests (unit and integration)
+python scripts/run_all_tests.py
+
+# Run only unit tests
+python scripts/run_all_tests.py --unit-only
+
+# Run with coverage reporting
+python scripts/run_all_tests.py --with-coverage
 ```
 
 ## License
